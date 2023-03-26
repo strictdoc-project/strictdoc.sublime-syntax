@@ -1,0 +1,182 @@
+%YAML 1.2
+---
+# http://www.sublimetext.com/docs/syntax.html
+name: StrictDoc
+comment: 'StrictDoc Syntax: version 1.0'
+file_extensions:
+  - sdoc
+first_line_match: '^\[DOCUMENT\]$'
+scope: source.sdoc
+contexts:
+  main:
+    - include: document
+    - include: grammar
+    - include: section
+    - include: requirement
+    - include: freetext
+    - include: keywords
+  choice_boolean:
+    - match: \b(True|False)\b
+      scope: constant.language
+  choice_enable:
+    - match: \b(On|Off)\b
+      scope: constant.language
+  document:
+    - match: '(?<!\.)^\[DOCUMENT\]$'
+      captures:
+        0: keyword
+      push:
+        - meta_scope: ''
+        - match: ^$
+          pop: true
+        - include: document_field_name
+        - include: document_options
+  document_field_name:
+    - match: '^\b(TITLE|UID|VERSION|CLASSIFICATION)\b:'
+      scope: keyword.control
+  document_options:
+    - match: ^OPTIONS:$
+      captures:
+        0: keyword.control
+      push:
+        - meta_scope: ''
+        - match: ^$
+          pop: true
+        - include: document_options_markup
+        - include: document_options_auto_levels
+        - include: document_options_requirement_style
+        - include: document_options_requirement_in_toc
+  document_options_auto_levels:
+    - match: (^\s\sAUTO_LEVELS:)
+      captures:
+        0: keyword.control
+      push:
+        - meta_scope: constant.numeric
+        - match: $
+          pop: true
+        - include: choice_enable
+  document_options_markup:
+    - match: (^\s\sMARKUP:)\s\b(RST|Text|HTML)\b$
+      scope: constant.numeric
+      captures:
+        1: keyword.control
+        2: constant.character
+  document_options_requirement_in_toc:
+    - match: (^\s\sREQUIREMENT_IN_TOC:)
+      captures:
+        0: keyword.control
+      push:
+        - meta_scope: constant.numeric
+        - match: $
+          pop: true
+        - include: choice_boolean
+  document_options_requirement_style:
+    - match: (^\s\sREQUIREMENT_STYLE:)\s\b(Inline|Simple|Table|Zebra)\b$
+      scope: constant.numeric
+      captures:
+        1: keyword.control
+        2: constant.character
+  freetext:
+    - match: '^\[FREETEXT\]$'
+      captures:
+        0: keyword
+      embed: scope:text.restructuredtext
+      escape: '^\[\/FREETEXT\]$'
+      escape_captures:
+        0: keyword
+  grammar:
+    - match: '^\[\b(GRAMMAR)\b\]$'
+      captures:
+        0: keyword
+      push:
+        - meta_scope: emphasis
+        - match: ^$
+          pop: true
+        - match: '^ELEMENTS:'
+          scope: keyword
+        - match: '^(-|\s)\s(TAG|FIELDS):'
+          scope: keyword
+        - include: grammar_field_title
+        - include: grammar_field_type
+        - include: grammar_field_required
+  grammar_field_reference_choice:
+    - match: \b(ParentReqReference|FileReference|BibReference)\b
+      scope: constant.character
+  grammar_field_required:
+    - match: (^\s\s\s\sREQUIRED:)\s
+      captures:
+        0: keyword
+      push:
+        - meta_scope: ''
+        - match: $
+          pop: true
+        - include: choice_boolean
+  grammar_field_title:
+    - match: (^\s\s-\sTITLE:)\s
+      captures:
+        0: keyword
+      push:
+        - meta_scope: ''
+        - match: $
+          pop: true
+        - match: \b(UID|REFS|TITLE|STATEMENT|RATIONALE|COMMENT)\b
+          scope: keyword.control
+  grammar_field_type:
+    - match: (^\s\s\s\sTYPE:)\s
+      captures:
+        0: keyword
+      push:
+        - meta_scope: ''
+        - match: $
+          pop: true
+        - match: \b(String|Tag|SingleChoice\(|MultipleChoice\(|Reference\()\b
+          scope: constant.numeric
+        - include: grammar_field_reference_choice
+  keywords:
+    - match: '\[\/(REQUIREMENT|GRAMMAR|DOCUMENT)\]'
+      scope: invalid.illegal
+    - match: '^\[\/?SECTION\]$'
+      scope: keyword
+  requirement:
+    - match: '^\[REQUIREMENT\]$'
+      captures:
+        0: keyword
+      push:
+        - match: ^$
+          captures:
+            0: keyword
+          pop: true
+        - include: rst_field_value
+        - include: requirement_fields
+        - include: requirement_field_params
+  requirement_field_params:
+    - match: ^(-\sTYPE|\s\sVALUE):\s
+      scope: keyword.other
+  requirement_fields:
+    - match: ^(UID|REFS|TITLE|STATEMENT|RATIONALE|COMMENT):\s
+      scope: keyword.control
+  rst:
+    - match: (.*)
+      comment: 'custom bundle name for reStructuredText: text.restructuredtext.'
+      captures:
+        0: text.restructuredtext
+  rst_field_value:
+    - match: '>>>$'
+      captures:
+        0: string.quoted.double
+      embed: scope:text.restructuredtext
+      escape: '^<<<$'
+      escape_captures:
+        0: string.quoted.double
+  section:
+    - match: '^\[SECTION\]$'
+      captures:
+        0: keyword
+      push:
+        - match: ^$
+          captures:
+            0: keyword
+          pop: true
+        - match: ^(UID|TITLE):\s
+          scope: keyword.control
+
